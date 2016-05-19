@@ -19,6 +19,7 @@ bit CB_R;
 bit IB_S;
 bit CB_S;
 bit IB;
+bit MIXING;
 
 void clock_r() {
   bit FB_R = R[99] ^ IB_R;
@@ -72,7 +73,7 @@ void clock_s() {
   }
 }
 
-void clock_kg(bit MIXING) {
+void clock_kg() {
   CB_R = S[34] ^ R[67];
   CB_S = S[67] ^ R[33];
 
@@ -99,24 +100,28 @@ void main() {
 
   for (int i=0; i < IVlength; i = i + 1) {
     IB = IV[i];
+    MIXING = 1;
     clock_kg(1);
   }
 
   for (int i=0; i < 80; i = i + 1) {
     IB = Key[i];
-    clock_kg(1);
+    MIXING = 1;
+    clock_kg();
   }
   
   for (int i=0; i < 100; i = i + 1) {
     IB = 0;
-    clock_kg(1);
+    MIXING = 1;
+    clock_kg();
   }
 
   /*ENCODER*/
   for(int i = 0; i < 128; i = i + 1) {
     KeyStream[i] = R[0] ^ S[0];
     IB = 0;
-    clock_kg(0);
+    MIXING = 0;
+    clock_kg();
   }
 
 }
