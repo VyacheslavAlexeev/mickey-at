@@ -22,7 +22,7 @@ void clock_r(bit IB_R, bit CB_R) {
 
   /* SHIFTING */
   for (int i = 1; i < 100; i = i + 1) {
-    R[i] = R[i-1];
+    R[i] = TMP_R[i-1];
   }
 
   R[0] = 0;
@@ -50,9 +50,9 @@ void clock_s(bit IB_S, bit CB_R) {
   bit ADD_S[100] = S;
 
   for (int i = 1; i < 99; i = i + 1) {
-    ADD_S[i] = S[i-1] ^ ((S[i] ^ COMP0[i]) & (S[i+1] ^ COMP1[i]));
+    ADD_S[i] = TMP_S[i-1] ^ ((TMP_S[i] ^ COMP0[i]) & (TMP_S[i+1] ^ COMP1[i]));
     ADD_S[0] = 0;
-    ADD_S[99] = S[98];
+    ADD_S[99] = TMP_S[98];
   }
 
   if (CB_S == 0) {
@@ -88,7 +88,7 @@ void main() {
 
   /*Initializing*/
 
-  for (int i=0; i<13; i = i + 1) {
+  for (int i=0; i<100; i = i + 1) {
     R[i] = 0;
     S[i] = 0;
   }
