@@ -9,10 +9,14 @@ bit COMP1[100] = {0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0,
 bit FB0[100] = {1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0};
 bit FB1[100] = {1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-int IV[32] =  {0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1};
-int IVlength = 32;
+define IVlength 32;
+int IV[IVlength] = {0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1};
 
 int RTAPS[50] = {0, 1, 3, 4, 5, 6, 9, 12, 13, 16, 19, 20, 21, 22, 25, 28, 37, 38, 41, 42, 45, 46, 50, 52, 54, 56, 58, 60, 61, 63, 64, 65, 66, 67, 71, 72, 79, 80, 81, 82, 87, 88, 89, 90, 91, 92, 94, 95, 96, 97};
+
+bit TMP_R[100];
+bit TMP_S[100];
+bit ADD_S[100];
 
 bit IB_R;
 bit CB_R;
@@ -25,26 +29,28 @@ void clock_r() {
   bit FB_R = R[99] ^ IB_R;
 
   /* SAVING OLD R */
-  bit TMP_R[100] = R;
+  for(int v=0;v<100;v=v+1){
+    TMP_R[v] = R[v];
+  }
 
   /* SHIFTING */
-  for (int i = 1; i < 100; i = i + 1) {
-    R[i] = TMP_R[i-1];
+  for (int o = 1; o < 100; o = o + 1) {
+    R[o] = TMP_R[o-1];
   }
 
   R[0] = 0;
 
-  for (int i = 0; i < 100; i = i + 1) {
+  for (int t = 0; t < 100; t = t + 1) {
     for (int j = 0; j < 50; j = j + 1) {
-      if (i == RTAPS[j]) {
-        R[i] = R[i] ^ FB_R;
+      if (t == RTAPS[j]) {
+        R[t] = R[t] ^ FB_R;
       }
     }
   }
 
   if (CB_R == 1) {
-    for (int i = 0; i < 100; i = i + 1) {
-      R[i] = R[i] ^ TMP_R[i];
+    for (int r = 0; r < 100; r = r + 1) {
+      R[r] = R[r] ^ TMP_R[r];
     }
   }
 }
@@ -52,23 +58,26 @@ void clock_r() {
 void clock_s() {
   bit FB_S = S[99] ^ IB_S;
 
-  /* SAVING OLD R */
-  bit TMP_S[100] = S;
-  bit ADD_S[100] = S;
-
-  for (int i = 1; i < 99; i = i + 1) {
-    ADD_S[i] = TMP_S[i-1] ^ ((TMP_S[i] ^ COMP0[i]) & (TMP_S[i+1] ^ COMP1[i]));
-    ADD_S[0] = 0;
-    ADD_S[99] = TMP_S[98];
+  /* SAVING OLD S */
+  for(int c=0;c<100;c = c + 1){
+    TMP_S[c] = S[c];
+    ADD_S[c] = S[c];
   }
 
+  for (int e=1; e<99; e=e+1) {
+    ADD_S[e] = TMP_S[e-1] ^ ((TMP_S[e] ^ COMP0[e]) & (TMP_S[e+1] ^ COMP1[e]));
+  }
+
+  ADD_S[0] = 0;
+  ADD_S[99] = TMP_S[98];
+
   if (CB_S == 0) {
-    for(int i = 0; i < 100; i = i + 1) {
-      S[i] = ADD_S[i] ^ (FB0[i] & FB_S);
+    for(int q = 0; q < 100; q = q + 1) {
+      S[q] = ADD_S[q] ^ (FB0[q] & FB_S);
     }
   } else {
-    for(int i = 0; i < 100; i = i + 1) {
-      S[i] = ADD_S[i] ^ (FB1[i] & FB_S);
+    for(int w = 0; w < 100; w = w + 1) {
+      S[w] = ADD_S[w] ^ (FB1[w] & FB_S);
     }
   }
 }
@@ -90,35 +99,32 @@ void clock_kg() {
 }
 
 void main() {
-
-  /*Initializing*/
-
-  for (int i=0; i<100; i = i + 1) {
-    R[i] = 0;
-    S[i] = 0;
+  for(int h=0;h<100;h=h+1) {
+    S[h] = 0;
+    R[h] = 0;
   }
 
-  for (int i=0; i < IVlength; i = i + 1) {
-    IB = IV[i];
-    MIXING = 1;
-    clock_kg(1);
-  }
-
-  for (int i=0; i < 80; i = i + 1) {
-    IB = Key[i];
+  for (int k=0; k < IVlength; k = k + 1) {
+    IB = IV[k];
     MIXING = 1;
     clock_kg();
   }
-  
-  for (int i=0; i < 100; i = i + 1) {
+
+  for (int m=0; m < 80; m = m + 1) {
+    IB = Key[m];
+    MIXING = 1;
+    clock_kg();
+  }
+
+  for (int k=0; k < 100; k = k + 1) {
     IB = 0;
     MIXING = 1;
     clock_kg();
   }
 
   /*ENCODER*/
-  for(int i = 0; i < 128; i = i + 1) {
-    KeyStream[i] = R[0] ^ S[0];
+  for(int n = 0; n < 128; n = n + 1) {
+    KeyStream[n] = R[0] ^ S[0];
     IB = 0;
     MIXING = 0;
     clock_kg();
