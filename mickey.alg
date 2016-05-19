@@ -14,7 +14,13 @@ int IVlength = 32;
 
 int RTAPS[50] = {0, 1, 3, 4, 5, 6, 9, 12, 13, 16, 19, 20, 21, 22, 25, 28, 37, 38, 41, 42, 45, 46, 50, 52, 54, 56, 58, 60, 61, 63, 64, 65, 66, 67, 71, 72, 79, 80, 81, 82, 87, 88, 89, 90, 91, 92, 94, 95, 96, 97};
 
-void clock_r(bit IB_R, bit CB_R) {
+bit IB_R;
+bit CB_R;
+bit IB_S;
+bit CB_S;
+bit IB;
+
+void clock_r() {
   bit FB_R = R[99] ^ IB_R;
 
   /* SAVING OLD R */
@@ -42,7 +48,7 @@ void clock_r(bit IB_R, bit CB_R) {
   }
 }
 
-void clock_s(bit IB_S, bit CB_R) {
+void clock_s() {
   bit FB_S = S[99] ^ IB_S;
 
   /* SAVING OLD R */
@@ -66,11 +72,9 @@ void clock_s(bit IB_S, bit CB_R) {
   }
 }
 
-void clock_kg(bit MIXING, bit IB) {
-  bit CB_R = S[34] ^ R[67];
-  bit CB_S = S[67] ^ R[33];
-  bit IB_R;
-  bit IB_S;
+void clock_kg(bit MIXING) {
+  CB_R = S[34] ^ R[67];
+  CB_S = S[67] ^ R[33];
 
   if (MIXING == 1) {
     IB_R = IB ^ S[50];
@@ -80,8 +84,8 @@ void clock_kg(bit MIXING, bit IB) {
 
   IB_S = IB;
 
-  clock_r(IB_R, CB_R);
-  clock_s(IB_S, CB_S);
+  clock_r();
+  clock_s();
 }
 
 void main() {
@@ -94,21 +98,25 @@ void main() {
   }
 
   for (int i=0; i < IVlength; i = i + 1) {
-    clock_kg(1, IV[i]);
+    IB = IV[i];
+    clock_kg(1);
   }
 
   for (int i=0; i < 80; i = i + 1) {
-    clock_kg(1, Key[i]);
+    IB = Key[i];
+    clock_kg(1);
   }
   
   for (int i=0; i < 100; i = i + 1) {
-    clock_kg(1, 0);
+    IB = 0;
+    clock_kg(1);
   }
 
   /*ENCODER*/
   for(int i = 0; i < 128; i = i + 1) {
     KeyStream[i] = R[0] ^ S[0];
-    clock_kg(0, 0);
+    IB = 0;
+    clock_kg(0);
   }
 
 }
